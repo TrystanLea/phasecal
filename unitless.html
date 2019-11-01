@@ -1,0 +1,88 @@
+<script type="text/javascript" src="jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="jquery.flot.min.js"></script>
+
+<div id="content">
+
+	<div class="demo-container">
+		<div id="placeholder" style="width:1200px; height:600px"></div>
+	</div>
+
+  <div id="out" style="font-size:22px"></div>
+
+</div>
+
+
+<script type="text/javascript">
+
+$(function() {
+
+  var f = 50.0;
+  var ps1 = 0.000;
+  var ps2 = (9.0/360.0)*0.02;
+
+	var voltage = [];
+	var current = [];
+	
+	for (var t = 0; t < 0.02*100; t += 0.0004) {
+		voltage.push([t, 230.0*Math.sqrt(2)*Math.sin(((t+ps1)/0.02)*2*Math.PI)]);
+		current.push([t, 100.0*Math.sqrt(2)*Math.sin(((t+ps2)/0.02)*2*Math.PI)]);
+	}
+	
+	var count = 0;
+	
+	var sumVsq = 0;
+	var sumIsq = 0;
+	
+	var sumPowerA = 0
+	var sumPowerB = 0
+	
+	for (var z=1; z<voltage.length; z++) {
+	    
+	    sumVsq += voltage[z][1] * voltage[z][1]
+	    sumIsq += current[z][1] * current[z][1]
+
+      sumPowerA += voltage[z][1] * current[z][1]
+      sumPowerB += voltage[z-1][1] * current[z][1]
+	    
+	    count++
+	}
+	
+	var powerAU = sumPowerA / count
+	var powerBU = sumPowerB / count
+  
+	var phase_shift = 2.0*Math.PI*-9.0/360.0
+	var sampleRate = 2.0*Math.PI*(0.0004/0.02)
+	
+	var y = Math.sin(phase_shift) / Math.sin(sampleRate);
+  var x = Math.cos(phase_shift) - y * Math.cos(sampleRate);
+  RP2 = (powerAU * x - powerBU * y)
+	
+	var RP = sumPowerA / count
+	
+	var Irms = Math.sqrt(sumIsq/count);
+	var Vrms = Math.sqrt(sumVsq/count);
+	
+	var AP = Vrms * Irms
+	
+	var pF = RP / AP
+	
+	var out = "";
+	out += "Irms: "+Irms.toFixed(1)+"\n";
+	out += "Vrms: "+Vrms.toFixed(1)+"\n";
+	out += "RP: "+RP.toFixed(1)+"\n";
+	out += "RP2: "+RP2.toFixed(1)+"\n";
+	out += "AP: "+AP.toFixed(1)+"\n";
+	out += "pF: "+pF.toFixed(3)+"\n";
+	
+	$("#out").html("<pre>"+out+"</pre>")
+	
+
+	$.plot("#placeholder", [ voltage, current ]);
+
+	// Add the Flot version string to the footer
+
+	$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+});
+
+</script>
+

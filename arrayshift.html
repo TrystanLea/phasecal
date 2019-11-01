@@ -1,0 +1,79 @@
+<script type="text/javascript" src="jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="jquery.flot.min.js"></script>
+
+<div id="content">
+
+	<div class="demo-container">
+		<div id="placeholder" style="width:1200px; height:600px"></div>
+	</div>
+
+  <div id="out" style="font-size:22px"></div>
+
+</div>
+
+
+<script type="text/javascript">
+
+$(function() {
+
+  var f = 50.0;
+  var ps1 = 0.000;
+  var ps2 = 0.0004*10;
+
+	var voltage = [];
+	var current = [];
+	
+	for (var t = 0; t < 0.02*10; t += 0.0004) {
+		voltage.push([t, 230.0*Math.sqrt(2)*Math.sin(((t+ps1)/0.02)*2*Math.PI)]);
+		current.push([t, 100.0*Math.sqrt(2)*Math.sin(((t+ps2)/0.02)*2*Math.PI)]);
+	}
+	
+	var count = 0;
+	
+	var sumVsq = 0;
+	var sumIsq = 0;
+	
+	var sumPower = 0;
+	
+	var l = voltage.length;
+	
+	for (var z=0; z<l; z++) {
+	    
+	    sumVsq += voltage[z][1] * voltage[z][1]
+	    sumIsq += current[z][1] * current[z][1]
+
+      var i = z+10;  // shift by 10
+      if (i>=l) i-=l // wrap around
+
+      sumPower += voltage[i][1] * current[z][1]
+	    
+	    count++
+	}
+	
+	var RP = sumPower / count
+	
+	var Irms = Math.sqrt(sumIsq/count);
+	var Vrms = Math.sqrt(sumVsq/count);
+	
+	var AP = Vrms * Irms
+	var pF = RP / AP
+	
+	var out = "";
+	out += "Irms: "+Irms.toFixed(1)+"\n";
+	out += "Vrms: "+Vrms.toFixed(1)+"\n";
+	out += "RP: "+RP.toFixed(1)+"\n";
+	out += "AP: "+AP.toFixed(1)+"\n";
+	out += "pF: "+pF.toFixed(3)+"\n";
+	
+	$("#out").html("<pre>"+out+"</pre>")
+	
+
+	$.plot("#placeholder", [ voltage, current ]);
+
+	// Add the Flot version string to the footer
+
+	$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+});
+
+</script>
+
